@@ -1,12 +1,10 @@
-#ifndef MQTTWRAPPER_H
-#define MQTTWRAPPER_H
-
-
+#pragma once
+#include <string>
 class MqttWrapper
 {
 public:
-    MqttWrapper();
-    int Publisher();
-};
+    MqttWrapper() = default;
+    ~MqttWrapper() = default;
 
-#endif // MQTTWRAPPER_H
+    int Publisher(const char* PAYLOAD4, const std::string TOPIC);
+};

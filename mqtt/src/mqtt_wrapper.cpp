@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <string>
-#include <thread>	// For sleep
+#include <thread>
 #include <atomic>
 #include <chrono>
 #include <cstring>
@@ -14,12 +14,14 @@ using namespace std;
 const std::string DFLT_SERVER_ADDRESS	{ "broker.hivemq.com:1883" };
 const std::string DFLT_CLIENT_ID		{ "async_publish" };
 
-const string TOPIC { "hello" };
+// const string TOPIC { "hello" };
+// const string TOPIC { "hello2" };
 
-const char* PAYLOAD1 = "RASPBERRY";
-const char* PAYLOAD2 = "SIE WITA";
-const char* PAYLOAD3 = "KOZAK?";
-const char* PAYLOAD4 = "Wiadomo";
+
+// const char* PAYLOAD1 = "RASPBERRY";
+// const char* PAYLOAD2 = "SIE WITA";
+// const char* PAYLOAD3 = "KOZAK?";
+// const char* PAYLOAD4 = "Wiadomo";
 
 const char* LWT_PAYLOAD = "Last will and testament.";
 
@@ -27,11 +29,6 @@ const int  QOS = 1;
 
 const auto TIMEOUT = std::chrono::seconds(10);
 
-/////////////////////////////////////////////////////////////////////////////
-
-/**
- * A callback class for use with the main MQTT client.
- */
 class callback : public virtual mqtt::callback
 {
 public:
@@ -47,11 +44,6 @@ public:
 	}
 };
 
-/////////////////////////////////////////////////////////////////////////////
-
-/**
- * A base action listener.
- */
 class action_listener : public virtual mqtt::iaction_listener
 {
 protected:
@@ -66,11 +58,6 @@ protected:
 	}
 };
 
-/////////////////////////////////////////////////////////////////////////////
-
-/**
- * A derived action listener for publish events.
- */
 class delivery_action_listener : public action_listener
 {
 	atomic<bool> done_;
@@ -90,9 +77,7 @@ public:
 	bool is_done() const { return done_; }
 };
 
-MqttWrapper::MqttWrapper() {}
-
-int MqttWrapper::Publisher()
+int MqttWrapper::Publisher(const char* PAYLOAD4, const string TOPIC)
 {
 	string	address  = DFLT_SERVER_ADDRESS,
 			clientID = DFLT_CLIENT_ID;
@@ -117,36 +102,7 @@ int MqttWrapper::Publisher()
 		conntok->wait();
 		cout << "  ...OK" << endl;
 
-		// First use a message pointer.
-
-		cout << "\nSending message..." << endl;
-		mqtt::message_ptr pubmsg = mqtt::make_message(TOPIC, PAYLOAD1);
-		pubmsg->set_qos(QOS);
-		client.publish(pubmsg)->wait_for(TIMEOUT);
-		cout << "  ...OK" << endl;
-
-		// Now try with itemized publish.
-
-		cout << "\nSending next message..." << endl;
-		mqtt::delivery_token_ptr pubtok;
-		pubtok = client.publish(TOPIC, PAYLOAD2, strlen(PAYLOAD2), QOS, false);
-		cout << "  ...with token: " << pubtok->get_message_id() << endl;
-		cout << "  ...for message with " << pubtok->get_message()->get_payload().size()
-			<< " bytes" << endl;
-		pubtok->wait_for(TIMEOUT);
-		cout << "  ...OK" << endl;
-
-		// Now try with a listener
-
-		cout << "\nSending next message..." << endl;
-		action_listener listener;
-		pubmsg = mqtt::make_message(TOPIC, PAYLOAD3);
-		pubtok = client.publish(pubmsg, nullptr, listener);
-		pubtok->wait();
-		cout << "  ...OK" << endl;
-
-		// Finally try with a listener, but no token
-
+		mqtt::message_ptr pubmsg; // to delete supressing compile error!!!
 		cout << "\nSending final message..." << endl;
 		delivery_action_listener deliveryListener;
 		pubmsg = mqtt::make_message(TOPIC, PAYLOAD4);
@@ -157,11 +113,6 @@ int MqttWrapper::Publisher()
 		}
 		cout << "OK" << endl;
 
-		// Double check that there are no pending tokens
-
-		auto toks = client.get_pending_delivery_tokens();
-		if (!toks.empty())
-			cout << "Error: There are pending delivery tokens!" << endl;
 
 		// Disconnect
 		cout << "\nDisconnecting..." << endl;
