@@ -1,17 +1,20 @@
 import paho.mqtt.client as mqtt
 import threading
-from threading import Thread, Lock
 import time
+
+from threading import Thread, Lock
+from ccs811 import *
+from hdc2010 import *
 
 mutex = Lock()
 broker_address="broker.hivemq.com"
 port = 1883
 
 ## Measurement Frequency (seconds) default = 10s ##
-measFreqTemp = 10
-measFreqHum = 10
-measFreqTvoc = 10
-measFreqCo2 = 10
+measFreqTemp = 1
+measFreqHum = 1
+measFreqTvoc = 1
+measFreqCo2 = 1
 
 ## COMMON FOR MQTT ##
 def onMessage(client, userdata, message):
@@ -69,7 +72,9 @@ def topicVariableMapper(topic, value):
 
 def sendTemperature():
     while True:
-        client.publish("rasp3b_temperature", "10")
+        temp = hdc2010ReadTemp()
+        if temp > 0:
+            client.publish("rasp3b_temperature", temp)
 
         mutex.acquire()
         try:
@@ -83,7 +88,9 @@ def sendTemperature():
 
 def sendHumidity():
     while True:
-        client.publish("rasp3b_humidity", "20")
+        hum = hdc2010ReadHumidity()
+        if hum > 0:
+            client.publish("rasp3b_humidity", hum)
 
         mutex.acquire()
         try:
@@ -97,8 +104,13 @@ def sendHumidity():
 
 def sendTvoc():
     while True:
-        client.publish("rasp3b_tvoc", "30")
-        
+        if ccs811CheckDataAndUpdate():
+            tvoc = ccs811GetTVOC()
+            if tvoc > 0:
+                client.publish("rasp3b_tvoc", tvoc)
+        elif ccs811CheckForError():
+            ccs811PrintError()
+
         mutex.acquire()
         try:
             global measFreqTvoc
@@ -111,7 +123,12 @@ def sendTvoc():
 
 def sendCo2():
     while True:
-        client.publish("rasp3b_co2", "40")
+        if ccs811CheckDataAndUpdate():
+            co2 = ccs811GetCO2()
+            if co2 > 0:
+                client.publish("rasp3b_co2", co2)
+        elif ccs811CheckForError():
+            ccs811PrintError()
 
         mutex.acquire()
         try:
@@ -122,6 +139,16 @@ def sendCo2():
 
         print("function ~~ sendCo2()", measFreqCo2Local) # debug
         time.sleep(measFreqCo2Local)
+
+## SENSOR INIT ##
+ccs811Begin(CCS811_driveMode_1sec)                              #start CCS811, data update rate at 1sec
+hdc2010Reset()                                                  #start with sensor reset
+hdc2010SetMeasurementsMode(HDC2010_TEMP_AND_HUMID)              #Set measurements to temperature and humidity 14bits resolution
+hdc2010SetRate(HDC2010_ONE_HZ)                                  #Set measurement frequency to 1 Hz
+hdc2010SetTempRes(HDC2010_FOURTEEN_BIT)                         #Set temperature resolution at 14bits
+hdc2010SetHumidRes(HDC2010_FOURTEEN_BIT)                        #Set humidity resolution at 14bits
+hdc2010TriggerMeasurement()                                     #trigger measurements
+sleep(1)
 
 ## MQTT INIT ##
 printCurrentFreqs()
