@@ -9,7 +9,7 @@ Conflicts=getty@tty1.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /home/pi/repos/sunshine_rasp3b/sunshine_rasp.py 
+ExecStart=/usr/bin/python /home/pi/repos/sunshine_rasp3b/sunshine_rasp.py 
 StandardInput=tty-force
 
 [Install]
