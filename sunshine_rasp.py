@@ -11,10 +11,10 @@ broker_address="broker.hivemq.com"
 port = 1883
 
 ## Measurement Frequency (seconds) default = 10s ##
-measFreqTemp = 1
-measFreqHum = 1
-measFreqTvoc = 1
-measFreqCo2 = 1
+measFreqTemp = 3
+measFreqHum = 5
+measFreqTvoc = 7
+measFreqCo2 = 11
 
 ## COMMON FOR MQTT ##
 def onMessage(client, userdata, message):
@@ -73,8 +73,8 @@ def topicVariableMapper(topic, value):
 def sendTemperature():
     while True:
         temp = hdc2010ReadTemp()
-        if temp > 0:
-            client.publish("rasp3b_temperature", temp)
+        #if temp > 0:
+        client.publish("rasp3b_temperature", temp)
 
         mutex.acquire()
         try:
@@ -89,8 +89,8 @@ def sendTemperature():
 def sendHumidity():
     while True:
         hum = hdc2010ReadHumidity()
-        if hum > 0:
-            client.publish("rasp3b_humidity", hum)
+        #if hum > 0:
+        client.publish("rasp3b_humidity", hum)
 
         mutex.acquire()
         try:
@@ -106,8 +106,8 @@ def sendTvoc():
     while True:
         if ccs811CheckDataAndUpdate():
             tvoc = ccs811GetTVOC()
-            if tvoc > 0:
-                client.publish("rasp3b_tvoc", tvoc)
+            #if tvoc > 0:
+            client.publish("rasp3b_tvoc", tvoc)
         elif ccs811CheckForError():
             ccs811PrintError()
 
@@ -125,8 +125,8 @@ def sendCo2():
     while True:
         if ccs811CheckDataAndUpdate():
             co2 = ccs811GetCO2()
-            if co2 > 0:
-                client.publish("rasp3b_co2", co2)
+            #if co2 > 0:
+            client.publish("rasp3b_co2", co2)
         elif ccs811CheckForError():
             ccs811PrintError()
 
@@ -145,8 +145,8 @@ ccs811Begin(CCS811_driveMode_1sec)                              #start CCS811, d
 hdc2010Reset()                                                  #start with sensor reset
 hdc2010SetMeasurementsMode(HDC2010_TEMP_AND_HUMID)              #Set measurements to temperature and humidity 14bits resolution
 hdc2010SetRate(HDC2010_ONE_HZ)                                  #Set measurement frequency to 1 Hz
-hdc2010SetTempRes(HDC2010_FOURTEEN_BIT)                         #Set temperature resolution at 14bits
-hdc2010SetHumidRes(HDC2010_FOURTEEN_BIT)                        #Set humidity resolution at 14bits
+hdc2010SetTempRes(HDC2010_NINE_BIT)                         #Set temperature resolution at 14bits
+hdc2010SetHumidRes(HDC2010_NINE_BIT)                        #Set humidity resolution at 14bits
 hdc2010TriggerMeasurement()                                     #trigger measurements
 sleep(1)
 
