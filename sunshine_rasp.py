@@ -111,7 +111,7 @@ def sendTvoc():
     while True:
         if ccs811CheckDataAndUpdate():
             tvoc = ccs811GetTVOC()
-            if tvoc > 0:
+            if tvoc > 0 and tvoc < 1187:
                 client.publish("rasp3BTvoc", tvoc)
         elif ccs811CheckForError():
             ccs811PrintError()
@@ -130,7 +130,7 @@ def sendCo2():
     while True:
         if ccs811CheckDataAndUpdate():
             co2 = ccs811GetCO2()
-            if co2 > 0:
+            if co2 > 0 and co2 < 8192:
                 client.publish("rasp3BCo2", co2)
         elif ccs811CheckForError():
             ccs811PrintError()
